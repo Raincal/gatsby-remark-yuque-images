@@ -3,8 +3,8 @@
 [![NPM version][npm-image]][npm-url]
 [![LICENSE version][license-image]][license-url]
 
-[npm-image]: https://img.shields.io/npm/v/yuque-hexo.svg?style=flat-square
-[npm-url]: https://img.shields.io/npm/v/gatsby-remark-yuque-images.svg?style=flat-square
+[npm-image]: https://img.shields.io/npm/v/gatsby-remark-yuque-images.svg?style=flat-square
+[npm-url]: https://www.npmjs.com/package/gatsby-remark-yuque-images
 [license-image]: https://img.shields.io/github/license/Raincal/gatsby-remark-yuque-images.svg?style=flat-square
 [license-url]: https://github.com/Raincal/gatsby-remark-yuque-images/blob/master/LICENSE
 

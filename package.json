@@ -1,6 +1,6 @@
 {
   "name": "gatsby-remark-yuque-images",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Raincal <cyj94228@gmail.com>",
   "main": "index.js",
   "license": "MIT",

@@ -11,7 +11,7 @@ action "Build" {
 action "Tag" {
   uses = "actions/bin/filter@707718ee26483624de00bd146e073d915139a3d8"
   needs = ["Build"]
-  args = "tag"
+  args = "tag v*"
 }
 
 action "Publish" {

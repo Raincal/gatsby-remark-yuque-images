@@ -1,5 +1,13 @@
 # gatsby-remark-yuque-images
 
+[![NPM version][npm-image]][npm-url]
+[![LICENSE version][license-image]][license-url]
+
+[npm-image]: https://img.shields.io/npm/v/yuque-hexo.svg?style=flat-square
+[npm-url]: https://img.shields.io/npm/v/gatsby-remark-yuque-images.svg?style=flat-square
+[license-image]: https://img.shields.io/github/license/Raincal/gatsby-remark-yuque-images.svg?style=flat-square
+[license-url]: https://github.com/Raincal/gatsby-remark-yuque-images/blob/master/LICENSE
+
 Processes images from [语雀](https://www.yuque.com).
 
 ## Install

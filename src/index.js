@@ -1,6 +1,5 @@
 const visitWithParents = require(`unist-util-visit-parents`)
 const crypto = require(`crypto`)
-const select = require(`unist-util-select`)
 const sharp = require(`sharp`)
 const axios = require(`axios`)
 const {

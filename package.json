@@ -1,6 +1,7 @@
 {
   "name": "gatsby-remark-yuque-images",
-  "version": "0.0.4",
+  "description": "Processes images from yuque",
+  "version": "0.1.0",
   "author": "Raincal <cyj94228@gmail.com>",
   "main": "index.js",
   "license": "MIT",
@@ -19,6 +20,9 @@
   "homepage": "https://github.com/Raincal/gatsby-remark-yuque-images#readme",
   "dependencies": {
     "@babel/runtime": "^7.2.0",
+    "axios": "^0.18.0",
+    "sharp": "^0.21.3",
+    "unist-util-select": "^2.0.0",
     "unist-util-visit-parents": "^2.0.1"
   },
   "devDependencies": {

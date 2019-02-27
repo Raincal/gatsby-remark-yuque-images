@@ -1,9 +1,25 @@
 const visitWithParents = require(`unist-util-visit-parents`)
-const { isYuqueImage, parseYuqueImage } = require(`./utils`)
+const crypto = require(`crypto`)
+const select = require(`unist-util-select`)
+const sharp = require(`sharp`)
+const axios = require(`axios`)
+const {
+  isYuqueImage,
+  parseYuqueImage,
+  buildResponsiveSizes
+} = require(`./utils`)
 
-module.exports = async ({ markdownAST }, pluginOptions) => {
+// If the image is hosted on yuque
+// 1. Find the image file
+// 2. Find the image's size
+// 3. Filter out any responsive image sizes that are greater than the image's width
+// 4. Create the responsive images.
+// 5. Set the html w/ aspect ratio helper.
+
+module.exports = async ({ markdownAST, cache }, pluginOptions) => {
   const defaults = {
     maxWidth: 746,
+    wrapperStyle: ``,
     backgroundColor: `white`,
     linkImagesToOriginal: true
   }
@@ -37,9 +53,11 @@ module.exports = async ({ markdownAST }, pluginOptions) => {
     inLink,
     yuqueImage
   ) => {
+    const originalImg = yuqueImage.url
     const optionsMaxWidth = options.maxWidth
     const yuqueImgOriginalWidth = yuqueImage.styles.originWidth
     const yuqueImgWidth = yuqueImage.styles.width
+    const yuqueImgAlt = node.alt.split('.').shift()
 
     inLink = yuqueImage.styles.link || inLink
 
@@ -50,49 +68,88 @@ module.exports = async ({ markdownAST }, pluginOptions) => {
           : optionsMaxWidth
         : yuqueImgWidth
 
-    const imageStyle = `
-      width: 100%;
-      max-width: ${maxWidth}px;
-      box-shadow: inset 0px 0px 0px 400px ${options.backgroundColor};`.replace(
-      /\s*(\S+:)\s*/g,
-      `$1`
-    )
+    const optionsHash = crypto
+      .createHash(`md5`)
+      .update(JSON.stringify(options))
+      .digest(`hex`)
 
-    let imageTag = `
-      <img
-        style="${imageStyle}"
-        alt="${node.alt}"
-        title="${node.title ? node.title : ``}"
-        src="${yuqueImage.url}"
-      />
-    `.trim()
+    const cacheKey = `remark-images-yq-${yuqueImage.styles.name}-${optionsHash}`
+    let cahedRawHTML = await cache.get(cacheKey)
 
-    let rawHTML = imageTag
+    if (cahedRawHTML) {
+      return cahedRawHTML
+    }
+    const metaReader = sharp()
+
+    const response = await axios({
+      method: `GET`,
+      url: originalImg,
+      responseType: `stream`
+    })
+
+    response.data.pipe(metaReader)
+
+    const metadata = await metaReader.metadata()
+
+    response.data.destroy()
+
+    const responsiveSizesResult = await buildResponsiveSizes({
+      metadata,
+      imageUrl: originalImg,
+      options
+    })
+
+    // Calculate the paddingBottom %
+    const ratio = `${(1 / responsiveSizesResult.aspectRatio) * 100}%`
+
+    const fallbackSrc = originalImg
+    const srcSet = responsiveSizesResult.srcSet
+    const presentationWidth = responsiveSizesResult.presentationWidth
+
+    // Construct new image node w/ aspect ratio placeholder
+    let rawHTML = `
+  <span
+    class="gatsby-resp-image-wrapper"
+    style="position: relative; display: block; ${
+      options.wrapperStyle
+    }; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto;"
+  >
+    <span
+      class="gatsby-resp-image-background-image"
+      style="padding-bottom: ${ratio}; position: relative; bottom: 0; left: 0; background-image: url('${
+      responsiveSizesResult.base64
+    }'); background-size: cover; display: block;"
+    ></span>
+    <img
+      class="gatsby-resp-image-image"
+      style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
+        options.backgroundColor
+      };"
+      alt="${yuqueImgAlt}"
+      title="${node.title ? node.title : ``}"
+      src="${fallbackSrc}"
+      srcset="${srcSet}"
+      sizes="${responsiveSizesResult.sizes}"
+    />
+  </span>
+  `.trim()
 
     // Make linking to original image optional.
-    if (!inLink && options.linkImagesToOriginal) {
+    if (options.linkImagesToOriginal) {
       rawHTML = `
-        <a
-          href="${yuqueImage.url}"
-          target="_blank"
-          rel="noopener"
-        >
-          ${imageTag}
-        </a>
-    `.trim()
-    } else if (yuqueImage.styles.link) {
-      // Make linking to the giving link.
-      rawHTML = `
-        <a
-          href="${yuqueImage.styles.link}"
-          target="${yuqueImage.styles.linkTarget}"
-          rel="noopener"
-        >
-          ${imageTag}
-        </a>
-    `.trim()
+<a
+  class="gatsby-resp-image-link"
+  href="${originalImg}"
+  style="display: block"
+  target="_blank"
+  rel="noopener"
+>
+${rawHTML}
+</a>
+  `.trim()
     }
 
+    await cache.set(cacheKey, rawHTML)
     return rawHTML
   }
 

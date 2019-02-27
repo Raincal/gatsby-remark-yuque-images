@@ -41,8 +41,9 @@ plugins: [
 | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `maxWidth`             | `746`   | The `maxWidth` in pixels of the `img` where the markdown will be displayed.                                                                                                                                                                                                     |
 | `linkImagesToOriginal` | `true`  | Add a link to each image to the original image. Sometimes people want to see a full-sized version of an image e.g. to see extra detail on a part of the image and this is a convenient and common pattern for enabling this. Set this option to false to disable this behavior. |
+| `wrapperStyle`         |         | Add custom styles to the div wrapping the responsive images. Use regular CSS syntax, e.g. `margin-bottom:10px;`                                                                                                                                                                 |
 | `backgroundColor`      | `white` | Set the background color of the image to match the background image of your design                                                                                                                                                                                              |
 
 ## LICENSE
 
-[MIT](./LICENSE)
+[MIT](https://github.com/Raincal/gatsby-remark-yuque-images/blob/master/LICENSE)

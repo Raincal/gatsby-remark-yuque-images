@@ -15,10 +15,11 @@ const {
 // 4. Create the responsive images.
 // 5. Set the html w/ aspect ratio helper.
 
-module.exports = async ({ markdownAST, cache }, pluginOptions) => {
+module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   const defaults = {
     maxWidth: 746,
     wrapperStyle: ``,
+    sizeByPixelDensity: false,
     backgroundColor: `white`,
     linkImagesToOriginal: true
   }
@@ -56,12 +57,12 @@ module.exports = async ({ markdownAST, cache }, pluginOptions) => {
     const optionsMaxWidth = options.maxWidth
     const yuqueImgOriginalWidth = yuqueImage.styles.originWidth
     const yuqueImgWidth = yuqueImage.styles.width
-    const yuqueImgAlt = node.alt.split('.').shift()
+    const yuqueImgAlt = node.alt ? node.alt.split('.').shift() : ''
 
     inLink = yuqueImage.styles.link || inLink
 
-    const maxWidth =
-      yuqueImgWidth === `746`
+    let maxWidth =
+      yuqueImgWidth >= `746`
         ? optionsMaxWidth > yuqueImgOriginalWidth
           ? yuqueImgOriginalWidth
           : optionsMaxWidth
@@ -78,46 +79,52 @@ module.exports = async ({ markdownAST, cache }, pluginOptions) => {
     if (cahedRawHTML) {
       return cahedRawHTML
     }
-    const metaReader = sharp()
 
-    const response = await axios({
-      method: `GET`,
-      url: originalImg,
-      responseType: `stream`
-    })
+    try {
+      const metaReader = sharp()
 
-    response.data.pipe(metaReader)
+      const response = await axios({
+        method: `GET`,
+        url: originalImg,
+        responseType: `stream`
+      })
 
-    const metadata = await metaReader.metadata()
+      response.data.pipe(metaReader)
 
-    response.data.destroy()
+      const metadata = await metaReader.metadata()
 
-    const responsiveSizesResult = await buildResponsiveSizes({
-      metadata,
-      imageUrl: originalImg,
-      options
-    })
+      options.maxWidth = maxWidth = maxWidth
+        ? maxWidth
+        : Math.min(metadata.width, optionsMaxWidth)
 
-    // Calculate the paddingBottom %
-    const ratio = `${(1 / responsiveSizesResult.aspectRatio) * 100}%`
+      response.data.destroy()
 
-    const fallbackSrc = originalImg
-    const srcSet = responsiveSizesResult.srcSet
-    const presentationWidth = responsiveSizesResult.presentationWidth
+      const responsiveSizesResult = await buildResponsiveSizes({
+        metadata,
+        imageUrl: originalImg,
+        options
+      })
 
-    // Construct new image node w/ aspect ratio placeholder
-    let rawHTML = `
+      // Calculate the paddingBottom %
+      const ratio = `${(1 / responsiveSizesResult.aspectRatio) * 100}%`
+
+      const fallbackSrc = originalImg
+      const srcSet = responsiveSizesResult.srcSet
+      const presentationWidth = responsiveSizesResult.presentationWidth
+
+      // Construct new image node w/ aspect ratio placeholder
+      let rawHTML = `
   <span
     class="gatsby-resp-image-wrapper"
-    style="position: relative; display: block; ${
-      options.wrapperStyle
-    }; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto;"
+    style="position: relative; display: block; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto; ${
+        options.wrapperStyle
+      }"
   >
     <span
       class="gatsby-resp-image-background-image"
       style="padding-bottom: ${ratio}; position: relative; bottom: 0; left: 0; background-image: url('${
-      responsiveSizesResult.base64
-    }'); background-size: cover; display: block;"
+        responsiveSizesResult.base64
+      }'); background-size: cover; display: block;"
     ></span>
     <img
       class="gatsby-resp-image-image"
@@ -133,9 +140,9 @@ module.exports = async ({ markdownAST, cache }, pluginOptions) => {
   </span>
   `.trim()
 
-    // Make linking to original image optional.
-    if (options.linkImagesToOriginal) {
-      rawHTML = `
+      // Make linking to original image optional.
+      if (!inLink && options.linkImagesToOriginal) {
+        rawHTML = `
 <a
   class="gatsby-resp-image-link"
   href="${originalImg}"
@@ -146,10 +153,27 @@ module.exports = async ({ markdownAST, cache }, pluginOptions) => {
 ${rawHTML}
 </a>
   `.trim()
-    }
+      } else if (yuqueImage.styles.link) {
+        // Make linking to the giving link.
+        rawHTML = `
+<a
+  class="gatsby-resp-image-link"
+  href="${yuqueImage.styles.link}"
+  style="display: block"
+  target="_blank"
+  rel="noopener"
+>
+  ${rawHTML}
+</a>
+  `.trim()
+      }
 
-    await cache.set(cacheKey, rawHTML)
-    return rawHTML
+      await cache.set(cacheKey, rawHTML)
+      return rawHTML
+    } catch (error) {
+      reporter.error(error)
+      return null
+    }
   }
 
   return Promise.all(

@@ -28,9 +28,7 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
   )
   const presentationHeight = Math.round(presentationWidth * (height / width))
 
-  if (!options.sizes) {
-    options.sizes = `(max-width: ${presentationWidth}px) 100vw, ${presentationWidth}px`
-  }
+  const sizes = `(max-width: ${presentationWidth}px) 100vw, ${presentationWidth}px`
 
   const images = []
 
@@ -63,7 +61,7 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
     aspectRatio,
     srcSet,
     src: imageUrl,
-    sizes: options.sizes,
+    sizes,
     density,
     presentationWidth,
     presentationHeight
@@ -76,6 +74,7 @@ const isYuqueImage = url => {
 
 const parseYuqueImage = link => {
   let [url, params] = link.split(`#`)
+  url = url.includes('x-oss-process') ? url.split('?').shift() : url
   const styles = paramsToObject(new URLSearchParams(params))
   return {
     url,

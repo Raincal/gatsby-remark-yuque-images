@@ -55,8 +55,8 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   ) => {
     const originalImg = yuqueImage.url
     const optionsMaxWidth = options.maxWidth
-    const yuqueImgOriginalWidth = yuqueImage.styles.originWidth
     const yuqueImgWidth = yuqueImage.styles.width
+    const yuqueImgOriginalWidth = yuqueImage.styles.originWidth || yuqueImgWidth
     const yuqueImgAlt = node.alt ? node.alt.split('.').shift() : ''
 
     inLink = yuqueImage.styles.link || inLink

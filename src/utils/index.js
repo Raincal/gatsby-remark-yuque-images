@@ -69,7 +69,7 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
 }
 
 const isYuqueImage = url => {
-  return url.includes(`https://cdn.nlark.com/yuque`)
+  return /https:\/\/cdn.(yuque|nlark).com\/yuque/.test(url)
 }
 
 const parseYuqueImage = link => {

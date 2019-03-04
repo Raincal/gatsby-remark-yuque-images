@@ -15,12 +15,9 @@ const getBase64Img = async url => {
 }
 
 const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
-  const { width, height, density } = metadata
+  const { width, height } = metadata
   const aspectRatio = width / height
-  const pixelRatio =
-    options.sizeByPixelDensity && typeof density === `number` && density > 0
-      ? density / 72
-      : 1
+  const pixelRatio = 1
 
   const presentationWidth = Math.min(
     options.maxWidth,
@@ -62,10 +59,13 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
     srcSet,
     src: imageUrl,
     sizes,
-    density,
     presentationWidth,
     presentationHeight
   }
+}
+
+const getMaxWidth = (optionsMaxWidth, imageWidth) => {
+  return optionsMaxWidth > imageWidth ? imageWidth : optionsMaxWidth
 }
 
 const isYuqueImage = url => {
@@ -92,6 +92,7 @@ const paramsToObject = entries => {
 
 module.exports = {
   buildResponsiveSizes,
+  getMaxWidth,
   isYuqueImage,
   parseYuqueImage
 }

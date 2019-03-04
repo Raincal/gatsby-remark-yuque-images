@@ -1,8 +1,8 @@
 const visitWithParents = require(`unist-util-visit-parents`)
 const crypto = require(`crypto`)
-const sharp = require(`sharp`)
 const axios = require(`axios`)
 const {
+  getMaxWidth,
   isYuqueImage,
   parseYuqueImage,
   buildResponsiveSizes
@@ -19,7 +19,6 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   const defaults = {
     maxWidth: 746,
     wrapperStyle: ``,
-    sizeByPixelDensity: false,
     backgroundColor: `white`,
     linkImagesToOriginal: true
   }
@@ -55,18 +54,11 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   ) => {
     const originalImg = yuqueImage.url
     const optionsMaxWidth = options.maxWidth
-    const yuqueImgWidth = yuqueImage.styles.width
-    const yuqueImgOriginalWidth = yuqueImage.styles.originWidth || yuqueImgWidth
     const yuqueImgAlt = node.alt ? node.alt.split('.').shift() : ''
 
-    inLink = yuqueImage.styles.link || inLink
+    let maxWidth = optionsMaxWidth
 
-    let maxWidth =
-      yuqueImgWidth >= `746`
-        ? optionsMaxWidth > yuqueImgOriginalWidth
-          ? yuqueImgOriginalWidth
-          : optionsMaxWidth
-        : yuqueImgWidth
+    inLink = yuqueImage.styles.link || inLink
 
     const optionsHash = crypto
       .createHash(`md5`)
@@ -81,23 +73,26 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
     }
 
     try {
-      const metaReader = sharp()
-
       const response = await axios({
         method: `GET`,
-        url: originalImg,
-        responseType: `stream`
+        url: `${originalImg}?x-oss-process=image/info`
       })
 
-      response.data.pipe(metaReader)
+      const { ImageWidth, ImageHeight } = response.data
 
-      const metadata = await metaReader.metadata()
+      const metadata = {
+        width: +ImageWidth.value,
+        height: +ImageHeight.value
+      }
 
-      options.maxWidth = maxWidth = maxWidth
-        ? maxWidth
-        : Math.min(metadata.width, optionsMaxWidth)
+      const yuqueImgWidth = yuqueImage.styles.width || metadata.width
+      const yuqueImgOriginalWidth =
+        yuqueImage.styles.originWidth || metadata.width
 
-      response.data.destroy()
+      options.maxWidth = maxWidth =
+        yuqueImgWidth >= `746`
+          ? getMaxWidth(optionsMaxWidth, yuqueImgOriginalWidth)
+          : getMaxWidth(optionsMaxWidth, yuqueImgWidth)
 
       const responsiveSizesResult = await buildResponsiveSizes({
         metadata,

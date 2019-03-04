@@ -15,7 +15,7 @@ const getBase64Img = async url => {
 }
 
 const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
-  const { width, height } = metadata
+  const { fileSize, width, height } = metadata
   const aspectRatio = width / height
   const pixelRatio = 1
 
@@ -53,10 +53,25 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
     )
     .join(`,\n`)
 
+  const webpSrcSet = filteredSizes
+    .map(size =>
+      options.withWebp.quality && fileSize > 10000
+        ? `${imageUrl}?x-oss-process=image/resize,w_${Math.round(
+            size
+          )}/format,webp/quality,q_${options.withWebp.quality} ${Math.round(
+            size
+          )}w`
+        : `${imageUrl}?x-oss-process=image/resize,w_${Math.round(
+            size
+          )}/format,webp ${Math.round(size)}w`
+    )
+    .join(`,\n`)
+
   return {
     base64: base64Img,
     aspectRatio,
     srcSet,
+    webpSrcSet,
     src: imageUrl,
     sizes,
     presentationWidth,

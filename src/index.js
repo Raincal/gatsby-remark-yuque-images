@@ -18,6 +18,7 @@ const {
 module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   const defaults = {
     maxWidth: 746,
+    withWebp: true,
     wrapperStyle: ``,
     backgroundColor: `white`,
     linkImagesToOriginal: true
@@ -78,9 +79,10 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
         url: `${originalImg}?x-oss-process=image/info`
       })
 
-      const { ImageWidth, ImageHeight } = response.data
+      const { FileSize, ImageWidth, ImageHeight } = response.data
 
       const metadata = {
+        fileSize: +FileSize.value,
         width: +ImageWidth.value,
         height: +ImageHeight.value
       }
@@ -107,6 +109,47 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
       const srcSet = responsiveSizesResult.srcSet
       const presentationWidth = responsiveSizesResult.presentationWidth
 
+      // Create our base image tag
+      let imageTag = `
+      <img
+        class="gatsby-resp-image-image"
+        style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
+          options.backgroundColor
+        };"
+        alt="${yuqueImgAlt}"
+        title="${node.title ? node.title : ``}"
+        src="${fallbackSrc}"
+        srcset="${srcSet}"
+        sizes="${responsiveSizesResult.sizes}"
+      />
+   `.trim()
+
+      // if options.withWebp is enabled, add a webp version and change the image tag to a picture tag
+      if (options.withWebp) {
+        imageTag = `
+        <picture>
+          <source
+            srcset="${responsiveSizesResult.webpSrcSet}"
+            sizes="${responsiveSizesResult.sizes}"
+            type="image/webp"
+          />
+          <source
+            srcset="${srcSet}"
+            sizes="${responsiveSizesResult.sizes}"
+          />
+          <img
+            class="gatsby-resp-image-image"
+            style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
+              options.backgroundColor
+            };"
+            alt="${yuqueImgAlt}"
+            title="${node.title ? node.title : ``}"
+            src="${fallbackSrc}"
+          />
+        </picture>
+      `.trim()
+      }
+
       // Construct new image node w/ aspect ratio placeholder
       let rawHTML = `
   <span
@@ -121,17 +164,7 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
         responsiveSizesResult.base64
       }'); background-size: cover; display: block;"
     ></span>
-    <img
-      class="gatsby-resp-image-image"
-      style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
-        options.backgroundColor
-      };"
-      alt="${yuqueImgAlt}"
-      title="${node.title ? node.title : ``}"
-      src="${fallbackSrc}"
-      srcset="${srcSet}"
-      sizes="${responsiveSizesResult.sizes}"
-    />
+    ${imageTag}
   </span>
   `.trim()
 

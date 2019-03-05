@@ -19,7 +19,7 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
   const aspectRatio = width / height
   const pixelRatio = 1
 
-  const presentationWidth = Math.min(
+  const presentationWidth = Math.max(
     options.maxWidth,
     Math.round(width / pixelRatio)
   )

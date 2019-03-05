@@ -33,15 +33,25 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
         node.type === `link`
     )
 
+  const findInlineImage = ({ children }) =>
+    children.some(
+      (node, i) =>
+        node.type == 'image' &&
+        children[i - 1] &&
+        (children[i - 1].type == 'image' || children[i - 1].type == 'text')
+    )
+
   // This will only work for markdown syntax image tags
   let markdownImageNodes = []
 
   visitWithParents(markdownAST, `image`, (node, ancestors) => {
-    const inLink = ancestors.some(findParentLinks)
+    const isInLink = ancestors.some(findParentLinks)
+    const isInline = ancestors.some(findInlineImage)
 
     markdownImageNodes.push({
       node,
-      inLink
+      isInLink,
+      isInline
     })
   })
 
@@ -50,7 +60,8 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   const generateImagesAndUpdateNode = async (
     node,
     resolve,
-    inLink,
+    isInLink,
+    isInline,
     yuqueImage
   ) => {
     const originalImg = yuqueImage.url
@@ -59,7 +70,7 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
 
     let maxWidth = optionsMaxWidth
 
-    inLink = yuqueImage.styles.link || inLink
+    isInLink = yuqueImage.styles.link || isInLink
 
     const optionsHash = crypto
       .createHash(`md5`)
@@ -109,6 +120,12 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
       const srcSet = responsiveSizesResult.srcSet
       const presentationWidth = responsiveSizesResult.presentationWidth
 
+      const inlineImgStyle = `
+        display: inline-block;
+        width: ${maxWidth}px;
+        vertical-align: top;
+      `
+
       // Create our base image tag
       let imageTag = `
       <img
@@ -155,8 +172,8 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   <span
     class="gatsby-resp-image-wrapper"
     style="position: relative; display: block; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto; ${
-        options.wrapperStyle
-      }"
+        isInline ? inlineImgStyle : ''
+      }${options.wrapperStyle}"
   >
     <span
       class="gatsby-resp-image-background-image"
@@ -169,12 +186,12 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
   `.trim()
 
       // Make linking to original image optional.
-      if (!inLink && options.linkImagesToOriginal) {
+      if (!isInLink && options.linkImagesToOriginal) {
         rawHTML = `
 <a
   class="gatsby-resp-image-link"
   href="${originalImg}"
-  style="display: block"
+  style="display: ${isInline ? `inline-block` : `block`}"
   target="_blank"
   rel="noopener"
 >
@@ -206,7 +223,7 @@ ${rawHTML}
 
   return Promise.all(
     markdownImageNodes.map(
-      ({ node, inLink }) =>
+      ({ node, isInLink, isInline }) =>
         new Promise(async (resolve, reject) => {
           if (isYuqueImage(node.url)) {
             const yuqueImage = parseYuqueImage(node.url)
@@ -216,7 +233,8 @@ ${rawHTML}
               const rawHTML = await generateImagesAndUpdateNode(
                 node,
                 resolve,
-                inLink,
+                isInLink,
+                isInline,
                 yuqueImage
               )
 

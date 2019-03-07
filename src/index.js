@@ -77,7 +77,7 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
       .update(JSON.stringify(options))
       .digest(`hex`)
 
-    const cacheKey = `remark-images-yq-${yuqueImage.styles.name}-${optionsHash}`
+    const cacheKey = `remark-images-yq-${originalImg.split('/')[8]}-${optionsHash}`
     let cahedRawHTML = await cache.get(cacheKey)
 
     if (cahedRawHTML) {

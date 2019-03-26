@@ -90,19 +90,20 @@ const isYuqueImage = url => {
 const parseYuqueImage = link => {
   let [url, params] = link.split(`#`)
   url = url.includes('x-oss-process') ? url.split('?').shift() : url
-  const styles = paramsToObject(new URLSearchParams(params))
+  const styles = paramsToObject(params)
   return {
     url,
     styles
   }
 }
 
-const paramsToObject = entries => {
-  let result = {}
-  for (let entry of entries) {
-    result[entry[0]] = entry[1]
-  }
-  return result
+const paramsToObject = params => {
+  if (!params) return {}
+  return params.split('&').reduce((acc, cur) => {
+    const [key, val] = cur.split('=')
+    acc[key] = val
+    return acc
+  }, {})
 }
 
 module.exports = {

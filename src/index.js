@@ -131,7 +131,7 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
       <img
         class="gatsby-resp-image-image"
         style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
-          options.backgroundColor
+        options.backgroundColor
         };"
         alt="${yuqueImgAlt}"
         title="${node.title ? node.title : ``}"
@@ -157,8 +157,8 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
           <img
             class="gatsby-resp-image-image"
             style="width: 100%; height: 100%; margin: 0; vertical-align: middle; position: absolute; top: 0; left: 0; box-shadow: inset 0px 0px 0px 400px ${
-              options.backgroundColor
-            };"
+          options.backgroundColor
+          };"
             alt="${yuqueImgAlt}"
             title="${node.title ? node.title : ``}"
             src="${fallbackSrc}"
@@ -173,13 +173,13 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
     class="gatsby-resp-image-wrapper"
     style="position: relative; display: block; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto; ${
         isInline ? inlineImgStyle : ''
-      }${options.wrapperStyle}"
+        }${options.wrapperStyle}"
   >
     <span
       class="gatsby-resp-image-background-image"
       style="padding-bottom: ${ratio}; position: relative; bottom: 0; left: 0; background-image: url('${
-        responsiveSizesResult.base64
-      }'); background-size: cover; display: block;"
+        responsiveSizesResult.bg
+        }'); background-size: cover; display: block;"
     ></span>
     ${imageTag}
   </span>

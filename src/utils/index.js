@@ -1,19 +1,3 @@
-const axios = require(`axios`)
-
-const getBase64Img = async url => {
-  const response = await axios({
-    method: `GET`,
-    responseType: `arraybuffer`,
-    url: `${url}`
-  })
-
-  const base64Img = `data:${
-    response.headers[`content-type`]
-  };base64,${Buffer.from(response.data).toString(`base64`)}`
-
-  return base64Img
-}
-
 const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
   const { fileSize, width, height } = metadata
   const aspectRatio = width / height
@@ -40,9 +24,7 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
 
   filteredSizes.push(width)
 
-  const base64Img = await getBase64Img(
-    `${imageUrl}?x-oss-process=image/resize,w_20`
-  )
+  const bgImg = `${imageUrl}?x-oss-process=image/resize,w_20`
 
   const srcSet = filteredSizes
     .map(
@@ -57,18 +39,19 @@ const buildResponsiveSizes = async ({ metadata, imageUrl, options = {} }) => {
     .map(size =>
       options.withWebp.quality && fileSize > 10000
         ? `${imageUrl}?x-oss-process=image/resize,w_${Math.round(
-            size
-          )}/format,webp/quality,q_${options.withWebp.quality} ${Math.round(
-            size
-          )}w`
+          size
+        )}/format,webp/quality,q_${options.withWebp.quality} ${Math.round(
+          size
+        )}w`
         : `${imageUrl}?x-oss-process=image/resize,w_${Math.round(
-            size
-          )}/format,webp ${Math.round(size)}w`
+          size
+        )}/format,webp ${Math.round(size)}w`
     )
     .join(`,\n`)
 
   return {
-    base64: base64Img,
+    // background image
+    bg: bgImg,
     aspectRatio,
     srcSet,
     webpSrcSet,

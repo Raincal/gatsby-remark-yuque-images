@@ -169,49 +169,53 @@ module.exports = async ({ markdownAST, cache, reporter }, pluginOptions) => {
 
       // Construct new image node w/ aspect ratio placeholder
       let rawHTML = `
-  <span
-    class="gatsby-resp-image-wrapper"
-    style="position: relative; display: block; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto; ${
-        isInline ? inlineImgStyle : ''
-        }${options.wrapperStyle}"
-  >
-    <span
-      class="gatsby-resp-image-background-image"
-      style="padding-bottom: ${ratio}; position: relative; bottom: 0; left: 0; background-image: url('${
-        responsiveSizesResult.bg
-        }'); background-size: cover; display: block;"
-    ></span>
-    ${imageTag}
-  </span>
-  `.trim()
+        <span
+          class="gatsby-resp-image-background-image"
+          style="padding-bottom: ${ratio}; position: relative; bottom: 0; left: 0; background-image: url('${
+                responsiveSizesResult.bg
+                }'); background-size: cover; display: block;"
+        ></span>
+        ${imageTag}
+      `.trim()
 
       // Make linking to original image optional.
       if (!isInLink && options.linkImagesToOriginal) {
         rawHTML = `
-<a
-  class="gatsby-resp-image-link"
-  href="${originalImg}"
-  style="display: ${isInline ? `inline-block` : `block`}"
-  target="_blank"
-  rel="noopener"
->
-${rawHTML}
-</a>
-  `.trim()
+          <a
+            class="gatsby-resp-image-link"
+            href="${originalImg}"
+            style="display: ${isInline ? `inline-block` : `block`}"
+            target="_blank"
+            rel="noopener"
+          >
+            ${rawHTML}
+          </a>
+      `.trim()
       } else if (yuqueImage.styles.link) {
         // Make linking to the giving link.
         rawHTML = `
-<a
-  class="gatsby-resp-image-link"
-  href="${yuqueImage.styles.link}"
-  style="display: block"
-  target="_blank"
-  rel="noopener"
->
-  ${rawHTML}
-</a>
-  `.trim()
+          <a
+            class="gatsby-resp-image-link"
+            href="${yuqueImage.styles.link}"
+            style="display: block"
+            target="_blank"
+            rel="noopener"
+          >
+            ${rawHTML}
+          </a>
+        `.trim()
       }
+
+      rawHTML = `
+        <span
+          class="gatsby-resp-image-wrapper"
+          style="position: relative; display: block; max-width: ${maxWidth}px; margin-left: auto; margin-right: auto; ${
+              isInline ? inlineImgStyle : ''
+              }${options.wrapperStyle}"
+        >
+          ${rawHTML}
+        </span>
+      `.trim()
 
       await cache.set(cacheKey, rawHTML)
       return rawHTML
